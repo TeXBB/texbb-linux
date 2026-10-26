@@ -1,0 +1,67 @@
+[
+  {
+    "File": "Avalonia-MIT.txt",
+    "Source": "https://raw.githubusercontent.com/AvaloniaUI/Avalonia/2d79ba55fae1b1e71c69f93a668080c9029e6a31/licence.md",
+    "SHA256": "213814D306090074D234D760239FF0F67EB9B8D20EEFB4D5631BB39DBE0B769B"
+  },
+  {
+    "File": "AvaloniaEdit-MIT.txt",
+    "Source": "https://raw.githubusercontent.com/AvaloniaUI/AvaloniaEdit/86fdebec4cff7affb0e14c7885df71d28edce777/LICENSE",
+    "SHA256": "8A13531B616DF7E9CD5D58BD8588DA2288E14FAB9E6785D1AEAD5C87E0A507D0"
+  },
+  {
+    "File": "AvalonEdit-MIT.txt",
+    "Source": "https://raw.githubusercontent.com/icsharpcode/AvalonEdit/master/LICENSE",
+    "SHA256": "7CFE74F11EAEF7A239E7C63D33595F924E7922FB3E3F3651014389620B228A07"
+  },
+  {
+    "File": "Markdig-BSD-2-Clause.txt",
+    "Source": "https://raw.githubusercontent.com/xoofx/markdig/fc705234fa211d179ee1d5e7656b51ab99f70ca9/license.txt",
+    "SHA256": "AE543293657B6782E3D4A76257DC4157210CE88A352EF8392065D3F04DCD88D1"
+  },
+  {
+    "File": "MicroCom-MIT.txt",
+    "Source": "https://raw.githubusercontent.com/kekekeks/MicroCom/76785efcafd91b5902fd19dd11145f6dd655b7b4/LICENSE",
+    "SHA256": "6EE769C9AC4DAC9ABB16B98B1341E9528FF9F4AB685481410D3376D14148F3A9"
+  },
+  {
+    "File": "Tmds.DBus-MIT.txt",
+    "Source": "https://raw.githubusercontent.com/tmds/Tmds.DBus/b4a7fed0b878f74cb54f7cca84d2889af4e596ba/COPYING",
+    "SHA256": "ACA3B49277ABCC7886CCB2F115603A9F5B15FC3F96019A10C00F2974098B210C"
+  },
+  {
+    "File": "Inter-OFL-1.1.txt",
+    "Source": "https://raw.githubusercontent.com/rsms/inter/master/LICENSE.txt",
+    "SHA256": "262481E844521B326F5ECD053E59B98C8B2DA78C8EE1BDBB6E8174305E54935A"
+  },
+  {
+    "File": "DotNet-LICENSE.TXT",
+    "Source": "NuGet:microsoft.netcore.app.runtime.linux-x64/10.0.14/LICENSE.TXT",
+    "SHA256": "CFC21F5E8BD655AE997EEC916138B707B1D290B83272C02A95C9F821B8C87310"
+  },
+  {
+    "File": "DotNet-THIRD-PARTY-NOTICES.TXT",
+    "Source": "NuGet:microsoft.netcore.app.runtime.linux-x64/10.0.14/THIRD-PARTY-NOTICES.TXT",
+    "SHA256": "66F1D4E44973185519BB4AA8A9718EB22FC7AF2CC532E3AE9CFC4C127EE7FC54"
+  },
+  {
+    "File": "SkiaSharp-LICENSE.txt",
+    "Source": "NuGet:skiasharp.nativeassets.linux/3.119.4/LICENSE.txt",
+    "SHA256": "89101E35A8C66FD4D6DFFC1763259161D35CB564C169714EC227A768C89F2938"
+  },
+  {
+    "File": "SkiaSharp-THIRD-PARTY-NOTICES.txt",
+    "Source": "NuGet:skiasharp.nativeassets.linux/3.119.4/THIRD-PARTY-NOTICES.txt",
+    "SHA256": "21504C46C4C58AA64C1055BD2DCBC5F9A136B4B8C412ED3CC6740E22C5B127F5"
+  },
+  {
+    "File": "HarfBuzzSharp-LICENSE.txt",
+    "Source": "NuGet:harfbuzzsharp.nativeassets.linux/8.3.1.3/LICENSE.txt",
+    "SHA256": "89101E35A8C66FD4D6DFFC1763259161D35CB564C169714EC227A768C89F2938"
+  },
+  {
+    "File": "HarfBuzzSharp-THIRD-PARTY-NOTICES.txt",
+    "Source": "NuGet:harfbuzzsharp.nativeassets.linux/8.3.1.3/THIRD-PARTY-NOTICES.txt",
+    "SHA256": "21504C46C4C58AA64C1055BD2DCBC5F9A136B4B8C412ED3CC6740E22C5B127F5"
+  }
+]

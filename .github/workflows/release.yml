@@ -1,0 +1,125 @@
+name: Linux release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      release_tag: ${{ steps.identity.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Validate release identity
+        id: identity
+        shell: bash
+        run: |
+          source release/version.env
+          bash scripts/verify-release.sh
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            [[ "$GITHUB_REF_NAME" == "$TEXBB_RELEASE_TAG" ]]
+          fi
+          printf 'release_tag=%s\n' "$TEXBB_RELEASE_TAG" >> "$GITHUB_OUTPUT"
+      - name: Prepare native Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0t64 libwebkit2gtk-4.1-0 libsoup-3.0-0 \
+            libfontconfig1 libice6 libsm6 poppler-utils xdg-utils desktop-file-utils \
+            xvfb xauth xdotool scrot dbus-x11
+      - name: Build and test on Linux
+        shell: bash
+        run: |
+          bash scripts/build.sh
+          python3 scripts/verify-licenses.py
+          bash scripts/test.sh
+          source scripts/build.sh
+          texbb_prepare_environment
+          dotnet run --project tests/TeXBB.Desktop.Probe/TeXBB.Desktop.Probe.csproj \
+            --configuration Release -- "$PWD/.codex-tmp/test-runs/native-headless"
+          bash tests/verify-install.sh
+      - name: Package and validate installation
+        shell: bash
+        run: |
+          source release/version.env
+          bash scripts/package-deb.sh
+          mapfile -t packages < <(find .codex-tmp/packages -mindepth 2 -maxdepth 2 -type f -name "texbb_${TEXBB_VERSION}_amd64.deb")
+          [[ ${#packages[@]} == 1 ]]
+          package="$(realpath "${packages[0]}")"
+          [[ "$(dpkg-deb -f "$package" Package)" == texbb ]]
+          [[ "$(dpkg-deb -f "$package" Version)" == "$TEXBB_VERSION" ]]
+          [[ "$(dpkg-deb -f "$package" Architecture)" == amd64 ]]
+          sudo apt-get install -y "$package"
+          [[ "$(dpkg-query -W -f='${Version}' texbb)" == "$TEXBB_VERSION" ]]
+          desktop-file-validate /usr/share/applications/texbb.desktop
+          test -x /usr/bin/texbb
+          test -s /opt/texbb/legal/DEPENDENCIES.json
+          dbus-run-session -- xvfb-run -a --server-args='-screen 0 1280x900x24' bash scripts/verify-installed-smoke.sh
+          sudo apt-get remove -y texbb
+          test ! -e /usr/bin/texbb
+          mkdir -p .codex-tmp/release-assets
+          cp "$package" .codex-tmp/release-assets/
+          cp scripts/install.sh .codex-tmp/release-assets/install.sh
+          (cd .codex-tmp/release-assets && sha256sum *.deb install.sh > SHA256SUMS && sha256sum --check SHA256SUMS)
+      - name: Retain validated release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-release-assets
+          path: .codex-tmp/release-assets/*
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+      - name: Retain validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-validation-evidence
+          path: .codex-tmp/test-runs/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-release-assets
+          path: .codex-tmp/release-assets
+      - name: Publish the tested alpha as a prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.build.outputs.release_tag }}
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        shell: bash
+        run: |
+          [[ "$REPOSITORY_PRIVATE" == false ]] || { echo "Public distribution requires a public release repository." >&2; exit 1; }
+          cd .codex-tmp/release-assets
+          sha256sum --check SHA256SUMS
+          gh release create "$RELEASE_TAG" --verify-tag --prerelease --latest=false \
+            --title "TeXBB Linux $RELEASE_TAG (alpha)" \
+            --notes-file "$GITHUB_WORKSPACE/release/notes.md" \
+            *.deb SHA256SUMS install.sh

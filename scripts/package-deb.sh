@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source "$(dirname -- "${BASH_SOURCE[0]}")/build.sh"
+source "$texbb_linux_root/release/version.env"
+[[ "$TEXBB_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+~alpha[0-9]+$ ]] || texbb_fail "Invalid Linux alpha package version."
 [[ $# == 0 ]] || texbb_fail "Usage: bash scripts/package-deb.sh"
 [[ "$(uname -s)" == Linux ]] || texbb_fail "Debian packaging must run on Linux."
 command -v dpkg-deb >/dev/null || texbb_fail "dpkg-deb is required. No packages are installed by this script."
@@ -40,7 +42,7 @@ DESKTOP
 installed_size="$(du -sk "$stage/opt" "$stage/usr" | awk '{total += $1} END {print total}')"
 cat > "$stage/DEBIAN/control" <<CONTROL
 Package: texbb
-Version: 0.1.0~alpha1
+Version: $TEXBB_VERSION
 Architecture: amd64
 Maintainer: TeXBB contributors
 Section: editors
@@ -55,7 +57,7 @@ CONTROL
 chmod 755 "$stage/DEBIAN" "$stage/usr/bin/texbb" "$stage/opt/texbb/TeXBB"
 chmod 644 "$stage/DEBIAN/control" "$stage/usr/share/applications/texbb.desktop" \
     "$stage/usr/share/icons/hicolor/256x256/apps/texbb.png"
-package="$package_run/texbb_0.1.0~alpha1_amd64.deb"
+package="$package_run/texbb_${TEXBB_VERSION}_amd64.deb"
 dpkg-deb --root-owner-group --build "$stage" "$package"
 dpkg-deb --info "$package"
 printf 'Created (not installed): %s\n' "$package"

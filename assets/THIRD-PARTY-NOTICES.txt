@@ -30,3 +30,9 @@ https://github.com/mono/SkiaSharp
 
 Poppler, TeX Live, Typst, Tectonic and Pandoc are optional/external system tools;
 their executables are not bundled by this application project.
+
+Original license and notice copies for the distributed dependency versions are
+included in legal/. DEPENDENCIES.json maps package versions and copyrights to
+these files; SOURCES.json records their provenance and SHA-256 hashes. MathJax
+and its TeX font license remain inside assets/mathjax-2.7.9.zip. Updating a
+dependency requires rechecking this inventory against the published runtime.

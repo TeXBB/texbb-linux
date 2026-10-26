@@ -1,11 +1,14 @@
 # TeXBB Linux alpha setup
 
-This independent Avalonia desktop lives entirely in `linux/`. The initial package
-target is an x86-64, glibc-based desktop such as Ubuntu 24.04 LTS. The package
+This independent Avalonia desktop lives entirely in this repository. The same
+x86-64, glibc-based package targets Debian 13 and Ubuntu 24.04 LTS. The package
 version is `0.1.0~alpha1`; it is separate from the Windows and Android releases.
 Linux desktop rendering and package installation still require verification on
 an actual Linux system. A successful Windows build or cross-publish does not
 establish that GTK/WebKit, clipboard, input methods, or PDF rendering work there.
+
+For the ready-to-install `.deb`, terminal installer and release workflow, see
+[Linux releases](releases.md). The instructions below are for building from source.
 
 ## Prerequisites
 
@@ -31,6 +34,12 @@ sudo apt install \
 ```
 
 The .NET dependencies follow [Microsoft's Ubuntu guidance](https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu-decision#dependencies).
+On **Debian 13**, use the same dependency command with `libicu76` in place of
+`libicu74`. The other listed package names are available on Debian 13. The `.deb`
+already declares both ICU alternatives, so `sudo apt install ./texbb_0.1.0~alpha1_amd64.deb`
+selects the appropriate packages without a separate app build or a separate
+.NET installation. See [Microsoft's Debian 13 dependencies](https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian#dependencies)
+and [Debian's WebKitGTK package](https://packages.debian.org/trixie/amd64/libwebkit2gtk-4.1-0).
 The X11/font packages follow [Avalonia's supported-platform requirements](https://docs.avaloniaui.net/docs/supported-platforms#desktop-linux).
 GTK 3, WebKitGTK 4.1 and libsoup 3 provide the web preview backend, per
 [Avalonia's Linux WebView prerequisites](https://github.com/AvaloniaUI/avalonia-docs/blob/main/docs/app-development/embedding-web-content.md#linux).
@@ -148,3 +157,8 @@ Before distributing this alpha, record actual Linux launch/rendering evidence,
 the distribution and desktop session, core-test results, compiler/PDF smoke
 tests, and a clean package install/uninstall check. No such Linux runtime or
 installation result is implied by the scripts or Windows-side validation.
+
+The independent Debian 13 graphical-desktop check is tracked in
+[Debian 13 verification](debian13-verification.md). Use the same `.deb` first and
+report installation errors, missing libraries, or GUI failures before changing
+the application or packaging.

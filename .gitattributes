@@ -4,3 +4,6 @@
 *.props text
 *.md text
 *.ps1 text
+# Preserve upstream license bytes: SOURCES.json pins their original SHA-256.
+assets/legal/*.txt -text
+assets/legal/*.TXT -text

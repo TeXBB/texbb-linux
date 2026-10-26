@@ -1,7 +1,7 @@
 # TeXBB for Linux
 
-An independent .NET 10 / Avalonia desktop alpha, targeting Ubuntu 24.04 LTS
-x86-64 with X11 or XWayland. All Linux source, dependencies, tests, documentation,
+An independent .NET 10 / Avalonia desktop alpha, targeting Debian 13 and
+Ubuntu 24.04 LTS on x86-64 with X11 or XWayland. All Linux source, dependencies, tests, documentation,
 and generated artifacts stay inside this directory. Windows and Android sources
 outside it are read-only references.
 
@@ -21,9 +21,27 @@ outside it are read-only references.
 - Workspace selection, editor search, font size, tool discovery, and a clickable
   status path that opens the document's folder.
 
+## Download and install
+
+One Linux x86-64 `.deb` targets both Debian 13 and Ubuntu 24.04 LTS through
+[GitHub Releases](https://github.com/TeXBB/texbb-linux/releases). This is an alpha;
+Windows and Android versions are independent. The homepage offers a download
+button and a one-line installer once the matching public release is available:
+
+```bash
+bash -c 'installer=$(curl -fsSL https://texbb.kiyuobjung.com/install.sh) && bash -c "$installer"'
+```
+
+The installer verifies the package checksum and identity, then uses APT to
+install native dependencies and add TeXBB to your app menu. It does not bundle
+LaTeX, Typst or Pandoc. See [release and installation details](docs/releases.md)
+for updates, removal, supported systems and the verification procedure.
+Debian 13 GUI installation and execution are pending independent verification;
+see the [Debian 13 checklist](docs/debian13-verification.md).
+
 ## Build and run
 
-With .NET SDK 10.0.403 available, from `linux/` on Linux:
+With .NET SDK 10.0.403 available, from the repository root on Linux:
 
 ```bash
 bash scripts/build.sh

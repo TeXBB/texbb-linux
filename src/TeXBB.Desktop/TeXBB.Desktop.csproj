@@ -16,6 +16,7 @@
   <ItemGroup>
     <Content Include="../../assets/mathjax-2.7.9.zip" Link="assets/mathjax-2.7.9.zip" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../assets/THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../assets/legal/**" Link="legal/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <AvaloniaResource Include="../../assets/texbb-logo.png" Link="Assets/texbb-logo.png" />
   </ItemGroup>
 </Project>

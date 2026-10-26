@@ -7,6 +7,10 @@ Set-StrictMode -Version Latest
 $PackageLinuxRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $PackageTemporary = Join-Path $PackageLinuxRoot '.codex-tmp'
 $Utf8 = [Text.UTF8Encoding]::new($false)
+$VersionFile = Join-Path $PackageLinuxRoot 'release/version.env'
+$VersionLines = @([IO.File]::ReadAllLines($VersionFile) | Where-Object { $_ -match '^TEXBB_VERSION=' })
+if ($VersionLines.Count -ne 1 -or $VersionLines[0] -notmatch '^TEXBB_VERSION=([0-9]+\.[0-9]+\.[0-9]+~alpha[0-9]+)$') { throw 'Invalid Linux alpha package version.' }
+$PackageVersion = $Matches[1]
 
 function Assert-NoLinks([string]$Path) {
     $Current = [IO.Path]::GetFullPath($Path)
@@ -216,7 +220,7 @@ $Payload.Add((New-PayloadFile 'usr/share/icons/hicolor/256x256/apps/texbb.png' (
 $InstalledSize = [long][Math]::Ceiling(($Payload | Measure-Object Length -Sum).Sum / 1024.0)
 $Control = @"
 Package: texbb
-Version: 0.1.0~alpha1
+Version: $PackageVersion
 Architecture: amd64
 Maintainer: TeXBB contributors
 Section: editors
@@ -238,7 +242,7 @@ foreach ($File in $Payload) {
 Write-TarGzip (Join-Path $RunDirectory 'control.tar.gz') @((New-PayloadFile 'control' $ControlPath)) @()
 Write-TarGzip (Join-Path $RunDirectory 'data.tar.gz') $Payload.ToArray() @($Directories)
 [IO.File]::WriteAllText((Join-Path $RunDirectory 'debian-binary'), "2.0`n", $Utf8)
-$DebPath = Join-Path $RunDirectory 'texbb_0.1.0~alpha1_amd64.deb'
+$DebPath = Join-Path $RunDirectory ("texbb_" + $PackageVersion + "_amd64.deb")
 $Deb = [IO.File]::Open($DebPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
 try {
     $Deb.Write([Text.Encoding]::ASCII.GetBytes("!<arch>`n"))
