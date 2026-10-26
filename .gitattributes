@@ -1,0 +1,6 @@
+*.sh text eol=lf
+*.cs text
+*.csproj text
+*.props text
+*.md text
+*.ps1 text

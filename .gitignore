@@ -1,0 +1,4 @@
+# Linux development artifacts stay inside this subtree.
+.codex-*/
+**/bin/
+**/obj/

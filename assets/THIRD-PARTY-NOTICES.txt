@@ -1,0 +1,32 @@
+TeXBB Linux alpha dependencies
+
+The Linux desktop uses the following third-party projects. Their ownership and
+licenses remain with their respective authors. Package versions are pinned in
+the project files; transitive package metadata is recorded by NuGet restore.
+
+Avalonia / Avalonia.Desktop / Avalonia.Themes.Fluent / Avalonia.Fonts.Inter
+Avalonia.Controls.WebView
+https://github.com/AvaloniaUI/Avalonia
+https://github.com/AvaloniaUI/Avalonia.Controls.WebView
+Consult each distributed package's license metadata and repository license.
+
+AvaloniaEdit
+https://github.com/AvaloniaUI/AvaloniaEdit
+MIT license; derived from AvalonEdit.
+
+Markdig
+https://github.com/xoofx/markdig
+BSD-2-Clause license.
+
+MathJax 2.7.9
+https://github.com/mathjax/MathJax/tree/2.7.9
+Apache License 2.0. The original LICENSE and all runtime resources are retained
+inside assets/mathjax-2.7.9.zip. The app extracts the complete archive locally.
+
+.NET runtime and SkiaSharp native/runtime components are supplied by the
+self-contained publish. Their package licenses and notices also apply.
+https://github.com/dotnet/runtime
+https://github.com/mono/SkiaSharp
+
+Poppler, TeX Live, Typst, Tectonic and Pandoc are optional/external system tools;
+their executables are not bundled by this application project.

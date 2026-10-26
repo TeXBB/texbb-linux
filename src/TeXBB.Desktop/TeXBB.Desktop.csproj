@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>TeXBB</AssemblyName>
+    <Version>0.1.0-alpha1</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TeXBB.Core/TeXBB.Core.csproj" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
+    <PackageReference Include="Avalonia.Controls.WebView" Version="12.1.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="../../assets/mathjax-2.7.9.zip" Link="assets/mathjax-2.7.9.zip" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../assets/THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+    <AvaloniaResource Include="../../assets/texbb-logo.png" Link="Assets/texbb-logo.png" />
+  </ItemGroup>
+</Project>
