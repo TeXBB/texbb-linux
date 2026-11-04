@@ -9,17 +9,21 @@ outside it are read-only references.
 
 - Open, edit, and save Markdown, LaTeX, Typst, and BibTeX documents in the existing
   `current/` and `reference/` workspace layout. Unsaved buffers survive document
-  switches; recovery drafts, history snapshots, and external-change detection
+  switches, including their individual Undo/Redo history; recovery drafts, history snapshots, and external-change detection
   protect edits.
 - Markdown preview with bundled offline MathJax 2.7.9, custom macros, tables,
   local images, and light/dark themes.
 - Manual LaTeX/Typst PDF builds using installed compilers; PDF page preview using
   Poppler, build logs, and cancellation.
-- Pen drawing with undo, colors, width, and PNG export. Existing stroke-only
+- Blackboard drawing with Undo/Redo, a stroke eraser, pen colors/widths, board opening and PNG export. Existing stroke-only
   Windows drawing boards can be read; unsupported board features are protected
   from overwriting.
 - Workspace selection, editor search, font size, tool discovery, and a clickable
   status path that opens the document's folder.
+
+- Windows-style mode navigation, open document tabs, a collapsible document list,
+  syntax highlighting, Save As/reload, and grouped settings. The free Linux edition
+  focuses on core editing and drawing; advanced Windows Tools features are not included.
 
 ## Download and install
 

@@ -21,7 +21,7 @@ using TeXBB.Core.Tools;
 
 namespace TeXBB.Desktop;
 
-public sealed class MainWindow : Window
+public sealed partial class MainWindow : Window
 {
     private WorkspaceStore workspace;
     private DesktopSettings settings;
@@ -38,12 +38,12 @@ public sealed class MainWindow : Window
         FontFamily = FontFamily.Default, MinHeight = 100, MaxHeight = 220 };
     private readonly DispatcherTimer previewTimer = new() { Interval = TimeSpan.FromMilliseconds(550) };
     private readonly DispatcherTimer recoveryTimer = new() { Interval = TimeSpan.FromSeconds(3) };
-    private readonly Grid shell = new() { RowDefinitions = new RowDefinitions("54,*,32") };
+    private readonly Grid shell = new() { RowDefinitions = new RowDefinitions("30,48,42,*,Auto,28") };
     private readonly Border sidebar = new();
     private readonly Border editorBorder = new();
     private readonly Border previewBorder = new();
-    private readonly Button buildButton;
-    private readonly Button cancelButton;
+    private Button buildButton = null!;
+    private Button cancelButton = null!;
     private DocumentBuffer? current;
     private NativeWebView? browser;
     private Uri? previewUri;
@@ -63,67 +63,11 @@ public sealed class MainWindow : Window
         Title = "TeXBB — Linux preview";
         Width = 1280; Height = 820; MinWidth = 860; MinHeight = 560;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        var toolbar = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(16, 9) };
-        toolbar.Children.Add(new TextBlock { Text = "TeXBB", FontWeight = FontWeight.Bold, FontSize = 22,
-            VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 16, 0) });
-        var newButton = Button("+ New", () => { });
-        var newMenu = new ContextMenu();
-        foreach (DocumentKind kind in Enum.GetValues<DocumentKind>())
-        {
-            var item = new MenuItem { Header = kind == DocumentKind.Latex ? "LaTeX" : kind.ToString() };
-            item.Click += async (_, _) => { try { await OpenDocumentAsync(workspace.CreateDocument(kind).File.Path); } catch (Exception error) { ShowError(error); } };
-            newMenu.Items.Add(item);
-        }
-        newButton.Click += (_, _) => newMenu.Open(newButton);
-        toolbar.Children.Add(newButton);
-        toolbar.Children.Add(Button("Open", async () => await OpenFileAsync()));
-        toolbar.Children.Add(Button("Save", () => SaveCurrent()));
-        buildButton = Button("Build PDF", async () => await BuildAsync());
-        toolbar.Children.Add(buildButton);
-        cancelButton = Button("Cancel", () => buildCancellation?.Cancel());
-        cancelButton.IsVisible = false;
-        toolbar.Children.Add(cancelButton);
-        toolbar.Children.Add(Button("Drawing", () => new DrawingWindow(workspace.Root).Show(this)));
-        toolbar.Children.Add(Button("History", async () => await ShowHistoryAsync()));
-        toolbar.Children.Add(Button("Settings", async () => await ShowSettingsAsync()));
-        shell.Children.Add(toolbar);
-
-        var content = new Grid { ColumnDefinitions = new ColumnDefinitions("220,*,5,*"), Margin = new Thickness(10, 0, 10, 0) };
-        var side = new Grid { RowDefinitions = new RowDefinitions("Auto,*,Auto") };
-        side.Children.Add(filter);
-        documentList.ItemsSource = documents;
-        documentList.Styles.Add(new Style(selector => selector.OfType<ListBoxItem>().Class(":selected"))
-        {
-            Setters = { new Setter(TemplatedControl.BackgroundProperty, Brush.Parse("#28745d")),
-                new Setter(TemplatedControl.ForegroundProperty, Brushes.White) }
-        });
-        documentList.ItemTemplate = new FuncDataTemplate<DocumentFile>((file, _) => new TextBlock
-        {
-            Text = file == null ? "" : file.Name, Margin = new Thickness(6, 8), TextTrimming = TextTrimming.CharacterEllipsis
-        });
-        Grid.SetRow(documentList, 1); side.Children.Add(documentList);
-        var workspaceButton = Button("Open workspace…", async () => await ChooseWorkspaceAsync());
-        workspaceButton.Margin = new Thickness(12); Grid.SetRow(workspaceButton, 2); side.Children.Add(workspaceButton);
-        sidebar.Child = side; sidebar.CornerRadius = new CornerRadius(10); content.Children.Add(sidebar);
-        var editing = new Grid { RowDefinitions = new RowDefinitions("Auto,*,Auto") };
-        editing.Children.Add(documentTitle);
-        Grid.SetRow(editor, 1); editing.Children.Add(editor);
-        var logExpander = new Expander { Header = "Build log", Content = log, Margin = new Thickness(8, 0, 8, 8) };
-        Grid.SetRow(logExpander, 2); editing.Children.Add(logExpander);
-        editorBorder.Child = editing; editorBorder.Margin = new Thickness(10, 0, 0, 0); editorBorder.CornerRadius = new CornerRadius(10);
-        Grid.SetColumn(editorBorder, 1); content.Children.Add(editorBorder);
-        var splitter = new GridSplitter { Width = 5, HorizontalAlignment = HorizontalAlignment.Stretch,
-            ResizeDirection = GridResizeDirection.Columns, Background = Brushes.Transparent };
-        Grid.SetColumn(splitter, 2); content.Children.Add(splitter);
-        previewBorder.Child = preview; previewBorder.CornerRadius = new CornerRadius(10);
-        Grid.SetColumn(previewBorder, 3); content.Children.Add(previewBorder);
-        Grid.SetRow(content, 1); shell.Children.Add(content);
-        status.PointerPressed += (_, _) => Guard(() => DesktopServices.OpenUri(new Uri(
-            Path.GetDirectoryName(current?.File.Path) ?? workspace.Root)));
-        status.Cursor = new Cursor(StandardCursorType.Hand);
-        Grid.SetRow(status, 2); shell.Children.Add(status);
+        // The owner coordinates the asynchronous drawing and document save decisions.
+        ClosingBehavior = WindowClosingBehavior.OwnerWindowOnly;
+        InitializeShell();
         Content = shell;
-        SearchPanel.Install(editor);
+        searchPanel = SearchPanel.Install(editor);
         ApplyTheme();
         editor.TextChanged += (_, _) =>
         {
@@ -142,9 +86,21 @@ public sealed class MainWindow : Window
         AddHandler(KeyDownEvent, async (_, args) =>
         {
             if ((args.KeyModifiers & KeyModifiers.Control) == 0) return;
-            if (args.Key == Key.S) { args.Handled = true; SaveCurrent(); }
-            if (args.Key == Key.O) { args.Handled = true; await OpenFileAsync(); }
-            if (args.Key == Key.Enter) { args.Handled = true; await BuildAsync(); }
+            try
+            {
+                bool shift = (args.KeyModifiers & KeyModifiers.Shift) != 0;
+                switch (args.Key)
+                {
+                    case Key.S: args.Handled = true; if (shift) await SaveAsAsync(); else SaveCurrent(); break;
+                    case Key.O: args.Handled = true; await OpenFileAsync(); break;
+                    case Key.N: args.Handled = true; await NewDocumentAsync(); break;
+                    case Key.W: args.Handled = true; if (current != null) await CloseDocumentAsync(current.File.Path); break;
+                    case Key.Tab: args.Handled = true; CycleDocument(shift ? -1 : 1); break;
+                    case Key.Enter: args.Handled = true; await BuildOrRefreshAsync(); break;
+                    case Key.F: args.Handled = true; ShowFind(); break;
+                }
+            }
+            catch (Exception error) { ShowError(error); }
         }, RoutingStrategies.Tunnel);
         Closing += OnClosing;
         Closed += (_, _) =>
@@ -179,23 +135,16 @@ public sealed class MainWindow : Window
         return button;
     }
 
-    private Button CreateButton(string text) => new()
+    private Button CreateButton(string text)
     {
-        Content = text, Padding = new Thickness(12, 7), CornerRadius = new CornerRadius(7),
-        Background = Brush.Parse(settings.Dark ? "#204d3a" : "#ddefe6"),
-        Foreground = Brush.Parse(settings.Dark ? "#eaf5ee" : "#183b2b")
-    };
-
-    private void ApplyTheme()
-    {
-        RequestedThemeVariant = settings.Dark ? ThemeVariant.Dark : ThemeVariant.Light;
-        Background = Brush.Parse(settings.Dark ? "#081912" : "#edf5f0");
-        Foreground = Brush.Parse(settings.Dark ? "#eaf5ee" : "#183b2b");
-        foreach (var border in new[] { sidebar, editorBorder, previewBorder })
-            border.Background = Brush.Parse(settings.Dark ? "#10261c" : "#ffffff");
-        editor.Background = editorBorder.Background;
-        documentList.Background = sidebar.Background;
-        editor.Foreground = Foreground; editor.FontSize = settings.FontSize;
+        var button = new Button
+        {
+            Content = text, Padding = new Thickness(10, 4), CornerRadius = new CornerRadius(4),
+            MinHeight = 30, FontSize = 12, VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center
+        };
+        button.Classes.Add("shell-action");
+        return button;
     }
 
     private void RefreshDocumentList()
@@ -203,6 +152,7 @@ public sealed class MainWindow : Window
         string selectedPath = current?.File.Path ?? "";
         var files = workspace.ListDocuments().Concat(buffers.Values.Select(buffer => buffer.File))
             .DistinctBy(file => file.Path, OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal)
+            .Where(file => file.Kind == selectedKind)
             .Where(file => string.IsNullOrWhiteSpace(filter.Text) || file.Name.Contains(filter.Text, StringComparison.OrdinalIgnoreCase))
             .OrderBy(file => file.Kind).ThenBy(file => file.Name).ToArray();
         loading = true;
@@ -212,6 +162,7 @@ public sealed class MainWindow : Window
             documentList.SelectedItem = files.FirstOrDefault(file => file.Path == selectedPath);
         }
         finally { loading = false; }
+        RefreshOpenTabs();
     }
 
     private async Task OpenDocumentAsync(string path)
@@ -230,22 +181,46 @@ public sealed class MainWindow : Window
     private void OpenBuffer(DocumentBuffer buffer)
     {
         SaveDrafts();
+        RememberEditorState();
         if (buffers.TryGetValue(buffer.File.Path, out var cached)) buffer = cached;
         InvalidatePreview();
         current = buffer; buffers[buffer.File.Path] = buffer;
+        selectedKind = buffer.File.Kind;
+        lastSelectedByKind[selectedKind] = buffer.File.Path;
+        if (!editorStates.TryGetValue(buffer.File.Path, out var state))
+        {
+            state = new EditorState(new AvaloniaEdit.Document.TextDocument(buffer.Text));
+            editorStates.Add(buffer.File.Path, state);
+        }
         loading = true;
-        try { editor.Text = buffer.Text; editor.Document.UndoStack.ClearAll(); }
+        try
+        {
+            editor.Document = state.Document;
+            editor.IsReadOnly = false;
+            editor.SyntaxHighlighting = EditorHighlighting.For(selectedKind, settings.Dark);
+            editor.Select(Math.Clamp(state.SelectionStart, 0, editor.Document.TextLength),
+                Math.Clamp(state.SelectionLength, 0, editor.Document.TextLength - Math.Clamp(state.SelectionStart, 0, editor.Document.TextLength)));
+            editor.CaretOffset = Math.Clamp(state.CaretOffset, 0, editor.Document.TextLength);
+            editor.ScrollToHorizontalOffset(state.HorizontalOffset);
+            editor.ScrollToVerticalOffset(state.VerticalOffset);
+        }
         finally { loading = false; }
         RefreshDocumentList(); UpdateTitle();
+        preview.Content = Message("Preview", "Loading " + buffer.File.Name + "…");
         previewTimer.Stop(); previewTimer.Start(); editor.Focus();
     }
 
     private void UpdateTitle()
     {
-        documentTitle.Text = current == null ? "Open a document" : current.File.Name + (current.IsDirty ? "  • Unsaved" : "");
-        Title = current == null ? "TeXBB — Linux preview" : $"{current.File.Name}{(current.IsDirty ? " *" : "")} — TeXBB";
-        buildButton.IsEnabled = buildCancellation == null && current?.File.Kind is DocumentKind.Latex or DocumentKind.Typst;
-        status.Text = current == null ? workspace.Root : $"{current.File.Kind}  |  {current.File.Path}";
+        documentTitle.Text = current == null ? "Preview" : current.File.Name + " — Preview";
+        Title = current == null ? "TeXBB — Linux" : $"{current.File.Name}{(current.IsDirty ? " *" : "")} — TeXBB";
+        buildButton.IsEnabled = buildCancellation == null && current?.File.Kind is DocumentKind.Markdown or DocumentKind.Latex or DocumentKind.Typst;
+        buildButton.Content = current?.File.Kind == DocumentKind.Markdown ? "↻  Preview" : "▶  Build PDF";
+        status.Text = current?.File.Path ?? workspace.Root;
+        ToolTip.SetTip(status, status.Text);
+        modeStatus.Text = KindName(selectedKind);
+        stateStatus.Text = buildCancellation != null ? "Building…" : current?.IsDirty == true ? "Unsaved changes" : "Ready";
+        UpdateModeButtons(); RefreshOpenTabs(); UpdateCaretStatus();
     }
 
     private bool SaveCurrent()
@@ -284,6 +259,8 @@ public sealed class MainWindow : Window
             var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Choose a TeXBB workspace", AllowMultiple = false });
             string? path = folders.FirstOrDefault()?.TryGetLocalPath(); if (path == null) return;
             if (!await ResolveUnsavedAsync()) return;
+            var drawing = drawingWindow;
+            if (drawing != null && !await drawing.RequestCloseAsync()) return;
             var nextWorkspace = new WorkspaceStore(path);
             var nextSettings = DesktopSettings.Load(nextWorkspace.Root);
             var nextFiles = nextWorkspace.ListDocuments();
@@ -291,7 +268,8 @@ public sealed class MainWindow : Window
             buildCancellation?.Cancel(); renderCancellation?.Cancel();
             InvalidatePreview();
             workspace = nextWorkspace; settings = nextSettings;
-            current = null; buffers.Clear(); mathJaxPath = null; pdfPath = null; filter.Text = "";
+            current = null; buffers.Clear(); editorStates.Clear(); lastBuilds.Clear(); lastSelectedByKind.Clear();
+            selectedKind = first.File.Kind; mathJaxPath = null; pdfPath = null; filter.Text = "";
             ApplyTheme(); RefreshDocumentList();
             await OfferRecoveryAsync(first); OpenBuffer(first);
         }
@@ -363,9 +341,17 @@ public sealed class MainWindow : Window
                 preview.Content = Message("Reference library", "Edit and save your BibTeX library here. Entries remain compatible with the Windows version.");
             else
             {
-                string existing = Path.ChangeExtension(target.File.Path, ".pdf");
-                if (File.Exists(existing)) await OpenPdfAsync(existing, generation);
-                else preview.Content = Message("PDF preview", "Build this document to preview it. Ctrl+Enter builds; Ctrl+S saves.");
+                if (lastBuilds.TryGetValue(target.File.Path, out var built))
+                {
+                    if (built.SourceText == sourceText && File.Exists(built.PdfPath)) await OpenPdfAsync(built.PdfPath, generation);
+                    else preview.Content = Message("Build needed", "The source has changed since its last PDF build. Press Ctrl+Enter to update the preview.");
+                }
+                else
+                {
+                    string existing = Path.ChangeExtension(target.File.Path, ".pdf");
+                    if (!target.IsDirty && File.Exists(existing)) await OpenPdfAsync(existing, generation);
+                    else preview.Content = Message("PDF preview", "Build this document to preview it. Ctrl+Enter builds; Ctrl+S saves.");
+                }
             }
         }
         catch (Exception exception)
@@ -391,6 +377,8 @@ public sealed class MainWindow : Window
                 Path.Combine(workspace.Root, "history", "linux-cache", "build", identity), cancellation.Token);
             lastLog = result.ToolName + Environment.NewLine + result.Stdout + Environment.NewLine + result.Stderr;
             log.Text = lastLog;
+            if (buffers.TryGetValue(target.File.Path, out var openTarget) && ReferenceEquals(openTarget, target))
+                lastBuilds[target.File.Path] = (result.PdfPath, expectedText);
             if (current == target && target.Text == expectedText) await OpenPdfAsync(result.PdfPath);
             else log.Text += "\nThe source changed during the build. Build again to update the preview.";
         }
@@ -508,11 +496,19 @@ public sealed class MainWindow : Window
     private async void OnClosing(object? sender, WindowClosingEventArgs args)
     {
         if (closingAllowed) return;
-        if (!buffers.Values.Any(buffer => buffer.IsDirty)) return;
         args.Cancel = true;
         if (closingDecision) return;
         closingDecision = true;
-        try { if (await ResolveUnsavedAsync()) { closingAllowed = true; Close(); } }
+        try
+        {
+            var drawing = drawingWindow;
+            if (drawing != null && !await drawing.RequestCloseAsync()) return;
+            if (!await ResolveUnsavedAsync()) return;
+            closingAllowed = true;
+            // Finish this canceled close event before beginning the approved close.
+            Dispatcher.UIThread.Post(Close);
+        }
+        catch (Exception error) { ShowError(error); }
         finally { closingDecision = false; }
     }
 
@@ -543,5 +539,5 @@ public sealed class MainWindow : Window
     }
 
     private void Guard(Action action) { try { action(); } catch (Exception exception) { ShowError(exception); } }
-    private void ShowError(Exception exception) { log.Text = exception.Message + "\n" + lastLog; status.Text = exception.Message; }
+    private void ShowError(Exception exception) { log.Text = exception.Message + "\n" + lastLog; stateStatus.Text = exception.Message; ToolTip.SetTip(stateStatus, exception.Message); SetLogVisible(true); }
 }

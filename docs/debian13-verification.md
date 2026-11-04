@@ -2,8 +2,10 @@
 
 Target: the existing TeXBB desktop app on **Debian 13 x86-64 (amd64)**, in an
 independent graphical desktop. Development remains on the Windows workstation;
-Frieren performs the actual Linux installation and GUI verification. No separate
-headless application or Debian-specific build is needed for this check.
+Debian verification can be performed on a suitable local or independent Linux
+test machine. The initial runtime checks now use local Ubuntu 24.04 under WSL 2,
+as recorded in [verification](verification.md); Debian 13 remains unverified.
+No separate headless application or Debian-specific build is needed for this check.
 
 ## Candidate and known evidence
 
@@ -30,8 +32,9 @@ headless application or Debian-specific build is needed for this check.
    `XDG_SESSION_TYPE`, and `DISPLAY`. This app uses X11; a Wayland desktop needs
    XWayland and a usable `DISPLAY`. A desktop being available does not yet prove
    that TeXBB can open a window.
-2. Download the release assets using a GitHub account that can read the private
-   repository, if the pre-release is private. In a fresh test directory, run
+2. Copy the existing package and checksum file to the test machine, or download
+   the release assets using a GitHub account that can read the private repository
+   if the pre-release is private. In a fresh test directory, run
    `sha256sum --check SHA256SUMS`, then inspect `dpkg-deb --info` and install:
 
    ```bash
